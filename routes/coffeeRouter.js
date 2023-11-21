@@ -3,7 +3,6 @@ const router = new Router();
 const coffeeController = require('../controllers/coffeeController');
 const roleMiddleware = require('../middlewaree/roleMiddleware');
 
-
 router.get('/all', roleMiddleware('ADMIN'),coffeeController.getAll);
 router.get('/', coffeeController.getInStock);
 router.post('/', roleMiddleware('ADMIN'),coffeeController.create);

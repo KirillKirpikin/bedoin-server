@@ -109,7 +109,6 @@ class DripController {
             const {id} =req.params;
             const product = await DripModel.findById(id);
             if (!product) {
-                console.log('Запись не найдена');
                 return res.status(404).json({ message: 'Запись не найдена' });
             }
 

@@ -39,10 +39,16 @@ class CoffeeController {
                 price = JSON.parse(price)
             }
         
-            let types = req.body.type;
+            let type = req.body.type;
             let arrType = [];
-            if(types){
-                arrType = types.split(',')
+            if(type){
+                type=JSON.parse(type)
+                type.forEach(i=>{
+                    arrType.push({
+                        label:i.label,
+                        img:i.img
+                    })
+                })
             }
 
 
@@ -136,13 +142,17 @@ class CoffeeController {
                 price = JSON.parse(price)
             }
         
-            let types = req.body.type;
+            let type = req.body.type;
             let arrType = [];
-            if(types){
-                arrType = types.split(',')
-            }
-            
-
+            if(type){
+                type=JSON.parse(type)
+                type.forEach(i=>{
+                    arrType.push({
+                        label:i.label,
+                        img:i.img
+                    })
+                })
+            }      
 
             let info = req.body.info
             

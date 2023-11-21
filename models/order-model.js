@@ -5,6 +5,7 @@ const OrderSchema = new Schema({
     lastName: {type: String, required: true},
     orderId: {type: String, required: true},
     orderTime: { type: Date, default: Date.now },
+    paymentStatus:{ type: String, default:'pending' },
     phone: {type: String, required: true},
     email: {type: String, required: true},
     city: {type: String, required: false},

@@ -17,7 +17,10 @@ const CoffeeSchema = new Schema({
             opt: {type: String, required: true}
         }
     },
-    type:[String],
+    type:[{
+        label:String,
+        img:String
+    }],
     description:{type: String, required: true},
     info: [{
         name:String,
