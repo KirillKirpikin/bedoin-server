@@ -78,6 +78,16 @@ class LemonadeController{
             next(ApiError.badRequest(e.message));           
         }
     }
+
+    async getAllFeed(){
+        try{
+            const products = await LemonadeModel.find();
+            return products
+        } catch (e) {
+            console.error(e);
+            throw new Error('Error fetching in-stock products');
+        }
+    }
     async getInStock(req, res, next){
         try {
             const product = await LemonadeModel.find({in_stock: true});

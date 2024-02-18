@@ -9,6 +9,8 @@ const authRouter = require('./authRouter');
 const sliderRouter = require('./sliderRouter');
 const stickerRouter = require('./stickerRouter');
 const subscribeRouter = require('./subscribeRouter');
+const xmlRouter = require('./xmlRouter');
+const promoRouter = require('./promoRouter');
 
 router.use('/coffee', coffeeRouter);
 router.use('/orders', orderRouter);
@@ -19,5 +21,7 @@ router.use('/slider', sliderRouter);
 router.use('/sticker', stickerRouter);
 router.use('/auth', authRouter);
 router.use('/subs', subscribeRouter);
+router.use('/product_feed.xml', xmlRouter);
+router.use('/promo', promoRouter);
 
 module.exports = router;

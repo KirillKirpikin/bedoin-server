@@ -3,6 +3,7 @@ const {Schema, model} = require('mongoose');
 const CoffeeSchema = new Schema({
     title: {type: String, required: true},
     short_description:{type: String, required: true},
+    country:{type: String, required: true},
     imgs:[{type: String, required: true}],
     imgs_kg:[{type: String, required: false}],
     packing_kg:{type:Boolean, required:true},
@@ -32,4 +33,3 @@ const CoffeeSchema = new Schema({
 
 
 module.exports = model('Coffee', CoffeeSchema);
-

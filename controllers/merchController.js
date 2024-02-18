@@ -95,6 +95,16 @@ class MerchController {
             next(ApiError.badRequest(e.message));           
         }
     }
+
+    async getAllFeed(){
+        try{
+            const products = await MerchModel.find();
+            return products
+        } catch (e) {
+            console.error(e);
+            throw new Error('Error fetching in-stock products');
+        }
+    }
     async getInStock(req, res, next){
         try {
             const product = await MerchModel.find({in_stock: true});

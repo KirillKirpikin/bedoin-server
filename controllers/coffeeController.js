@@ -9,9 +9,9 @@ class CoffeeController {
     async create(req, res, next){
         try {
            
-            let {title, short_description, description,in_stock, packing_kg} = req.body;
+            let {title, short_description, country, description,in_stock, packing_kg} = req.body;
             let {img, img_kg} = req.files;
-            let arr = [];            
+            let arr = [];         
 
             if(Array.isArray(img)){
                 img.forEach(img=>{
@@ -67,6 +67,7 @@ class CoffeeController {
             const newProduct = new CoffeeModel({
                 title,
                 short_description,
+                country,
                 imgs: arr,
                 imgs_kg: arrKg,
                 packing_kg,
@@ -87,7 +88,7 @@ class CoffeeController {
     async updateOne(req,res,next){
         try {
             const {id} = req.params;
-            let {title, short_description, description,in_stock, packing_kg, oldImgs, oldImgsKg} = req.body;
+            let {title, short_description, country, description,in_stock, packing_kg, oldImgs, oldImgsKg} = req.body;
             let fil = req.files;
             const product = await CoffeeModel.findById(id);
             if (!product) {
@@ -170,6 +171,7 @@ class CoffeeController {
             const updateData = {
                 title,
                 short_description,
+                country,
                 imgs: arr,
                 imgs_kg: arrKg,
                 packing_kg,
@@ -199,6 +201,16 @@ class CoffeeController {
             
         } catch (e) {
             next(ApiError.badRequest(e.message));
+        }
+    }
+
+    async getAllFeed(){
+        try{
+            const products = await CoffeeModel.find();
+            return products
+        } catch (e) {
+            console.error(e);
+            throw new Error('Error fetching in-stock products');
         }
     }
 

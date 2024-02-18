@@ -5,6 +5,34 @@ const bot = new TelegramBot(process.env.TOKEN_TELEGRAM_ID, { polling: false });
 async function sendTelegramMessage(order) {
   const chatId = process.env.CHAT_ID;
   const timeOrd = formatDateTime(order.orderTime)
+
+  const getPayInfo = (pay) =>{
+    switch(pay){
+      case 'OnlinePay': 
+        return 'Онлайн оплата';
+      case 'Cash': 
+        return 'При получении';
+      case 'ScorePay': 
+        return 'На разрохунковый рахунок';
+    }
+  }
+  
+  const getDeliveryInfo = (order) => {
+    switch (order.delivery) {
+      case 'NovaPost':
+        return `Доставка: Нова Пошта\n
+        Оплата: ${getPayInfo(order.payment)}\n
+        Город: ${order.city}\nОтделение: ${order.warehouses}`;
+      case 'Courier':
+        return `Доставка: Курьерская доставка\n
+        Оплата: ${getPayInfo(order.payment)}`;
+      case 'Pickup':
+        return `Доставка: Самовывоз\n
+        Оплата: ${getPayInfo(order.payment)}`;
+      default:
+        return ''; // Обработка для других случаев доставки, если необходимо
+    }
+  };
     
   let text = `
 Номер заказа: ${order.orderId},
@@ -26,14 +54,9 @@ ${order.order.map(item => `
 Общая сумма заказа: ${order.total} грн.
 
 Доставка:
-${
-order.delivery === 'NovaPost'
-    ? `Доставка: Нова Пошта\nОплата: ${order.payment === 'Cash' ? 'При получении' : 'Онлайн оплата'}\nГород: ${order.city}\nОтделение: ${order.warehouses}`
-    : `Доставка: Самовывоз\nОплата: ${order.payment === 'Cash' ? 'При получении' : 'Онлайн оплата'}`
-}
+${getDeliveryInfo(order)}
   `;
 
-  
   try {
     await bot.sendMessage(chatId, text);
     console.log('Уведомление успешно отправлено в телеграм-группу');
