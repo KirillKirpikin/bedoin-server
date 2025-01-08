@@ -8,6 +8,6 @@ router.post('/offline', orderController.createOffline);
 router.get('/', roleMiddleware('ADMIN'), orderController.getAllOrders);
 router.post('/redirect', orderController.redirect);
 router.delete('/:id', roleMiddleware('ADMIN'), orderController.deleteOne);
-// router.post('/result', orderController.resultUrl);
+router.post('/result', orderController.result);
 
 module.exports = router;

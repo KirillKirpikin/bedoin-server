@@ -85,6 +85,16 @@ class DripController {
         }
     }
 
+    async getAllFeed(){
+        try{
+            const products = await DripModel.find();
+            return products
+        } catch (e) {
+            console.error(e);
+            throw new Error('Error fetching in-stock products');
+        }
+    }
+
     async getInStock(req, res, next){
         try{
             const product = await DripModel.find({in_stock: true});
