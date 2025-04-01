@@ -1,23 +1,29 @@
-const {Schema, model} = require('mongoose');
+const { Schema, model } = require("mongoose");
 
-const DripSchema = new Schema({
-    title: {type:String, required:true},
-    description:{type: String, required: true},
-    short_description:{type: String, required: true},
-    imgs:[{type: String, required: true}],
-    in_stock:{type:Boolean, required:true},
-    price:{
-        standart:{
-            regular:{type: String, required: true},
-            opt: {type: String, required: true}
-        }
+const DripSchema = new Schema(
+    {
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        short_description: { type: String, required: true },
+        id_standart: { type: String, required: false },
+        imgs: [{ type: String, required: true }],
+        in_stock: { type: Boolean, required: true },
+        price: {
+            standart: {
+                regular: { type: String, required: true },
+                opt: { type: String, required: true },
+            },
+        },
+        info: [
+            {
+                name: String,
+                text: String,
+            },
+        ],
     },
-    info: [{
-        name:String,
-        text:String
-    }]
-},{
-    collection: 'drip'
-})
+    {
+        collection: "drip",
+    }
+);
 
-module.exports = model('Drip', DripSchema);
+module.exports = model("Drip", DripSchema);

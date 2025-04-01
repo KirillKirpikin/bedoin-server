@@ -5,6 +5,8 @@ const CoffeeSchema = new Schema(
         title: { type: String, required: true },
         short_description: { type: String, required: true },
         country: { type: String, required: true },
+        id_kg: { type: String, required: false },
+        id_standart: { type: String, required: false },
         imgs: [{ type: String, required: true }],
         imgs_kg: [{ type: String, required: false }],
         packing_kg: { type: Boolean, required: true },
@@ -23,6 +25,17 @@ const CoffeeSchema = new Schema(
             {
                 label: String,
                 img: String,
+            },
+        ],
+        recipe: [
+            {
+                name: String,
+                info: [
+                    {
+                        name: String,
+                        text: String,
+                    },
+                ],
             },
         ],
         description: { type: String, required: true },

@@ -15,6 +15,8 @@ class CoffeeController {
                 description,
                 in_stock,
                 packing_kg,
+                id_kg,
+                id_standart,
             } = req.body;
             let { img, img_kg } = req.files;
             let arr = [];
@@ -67,6 +69,25 @@ class CoffeeController {
                 });
             }
 
+            let recipe = req.body.recipe;
+            let recipeArr = [];
+            if (recipe) {
+                recipe = JSON.parse(recipe);
+                recipe.forEach((i) => {
+                    let infoArr = [];
+                    i.info.forEach((j) => {
+                        infoArr.push({
+                            name: j.name,
+                            text: j.text,
+                        });
+                    });
+                    recipeArr.push({
+                        name: i.name,
+                        info: infoArr,
+                    });
+                });
+            }
+
             const newProduct = new CoffeeModel({
                 title,
                 short_description,
@@ -75,10 +96,13 @@ class CoffeeController {
                 imgs_kg: arrKg,
                 packing_kg,
                 in_stock,
+                id_kg: id_kg,
+                id_standart: id_standart,
                 price: price,
                 type: arrType,
                 description,
                 info: infoArr,
+                recipe: recipeArr,
             });
 
             const saveProduct = await newProduct.save();
@@ -98,9 +122,12 @@ class CoffeeController {
                 description,
                 in_stock,
                 packing_kg,
+                id_kg,
+                id_standart,
                 oldImgs,
                 oldImgsKg,
             } = req.body;
+            console.log(req.body);
             let fil = req.files;
             const product = await CoffeeModel.findById(id);
             if (!product) {
@@ -188,6 +215,26 @@ class CoffeeController {
                 });
             }
 
+            let recipe = req.body.recipe;
+
+            let recipeArr = [];
+            if (recipe) {
+                recipe = JSON.parse(recipe);
+                recipe.forEach((i) => {
+                    let infoArr = [];
+                    i.info.forEach((j) => {
+                        infoArr.push({
+                            name: j.name,
+                            text: j.text,
+                        });
+                    });
+                    recipeArr.push({
+                        name: i.name,
+                        info: infoArr,
+                    });
+                });
+            }
+
             const updateData = {
                 title,
                 short_description,
@@ -197,9 +244,12 @@ class CoffeeController {
                 packing_kg,
                 in_stock,
                 price: price,
+                id_kg: id_kg,
+                id_standart: id_standart,
                 type: arrType,
                 description,
                 info: infoArr,
+                recipe: recipeArr,
             };
 
             const updatedProduct = await CoffeeModel.findByIdAndUpdate(
@@ -220,7 +270,7 @@ class CoffeeController {
 
     async getAll(req, res, next) {
         try {
-            const products = await CoffeeModel.find();
+            const products = await CoffeeModel.find().sort({ in_stock: -1 });
             return res.json(products);
         } catch (e) {
             next(ApiError.badRequest(e.message));
