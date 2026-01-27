@@ -7,6 +7,7 @@ const cors = require("cors");
 const router = require("./routes/index");
 const path = require("path");
 const cookieParser = require("cookie-parser");
+const { startCleanupErrorOrdersCron } = require("./cron/cleanupErrorOrders");
 
 const PORT = process.env.PORT || 5000;
 
@@ -40,8 +41,9 @@ const start = async () => {
                 useUnifiedTopology: true,
             })
             .then(() => console.log("connect to MongoDB"));
+        startCleanupErrorOrdersCron();
         app.listen(PORT, "0.0.0.0", () =>
-            console.log(`Server started on port ${PORT}`)
+            console.log(`Server started on port ${PORT}`),
         );
     } catch (e) {
         console.log(e);

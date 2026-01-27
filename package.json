@@ -22,6 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^5.8.1",
     "mongoose": "^7.4.5",
+    "node-cron": "^4.2.1",
     "node-telegram-bot-api": "^0.64.0",
     "request": "^2.88.2",
     "uuid": "^9.0.0"
