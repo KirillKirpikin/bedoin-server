@@ -270,7 +270,50 @@ class CoffeeController {
 
     async getAll(req, res, next) {
         try {
-            const products = await CoffeeModel.find().sort({ in_stock: -1 });
+            // Создаём объект фильтра
+            const filter = {};
+
+            // Поиск по названию (частичное совпадение, регистронезависимый)
+            if (req.query.search) {
+                filter.title = { $regex: req.query.search, $options: "i" };
+            }
+            console.log("roastType запрос:", req.query.roastType);
+
+            // Фильтр по типу обжарки (під фільтр / під еспресо)
+            if (req.query.roastType) {
+                filter["info"] = {
+                    $elemMatch: {
+                        name: {
+                            $regex: "^\\s*Тип обсмажки\\s*$",
+                            $options: "i",
+                        },
+                        text: {
+                            $regex: `^\\s*${req.query.roastType.trim()}\\s*$`,
+                            $options: "i",
+                        },
+                    },
+                };
+            }
+
+            const products = await CoffeeModel.find(filter).sort({
+                in_stock: -1,
+            });
+
+            // Временное логирование для отладки
+            if (req.query.roastType && products.length > 0) {
+                console.log(
+                    "Первый найденный продукт info:",
+                    JSON.stringify(products[0].info, null, 2)
+                );
+            } else if (req.query.roastType && products.length === 0) {
+                // Получим один продукт без фильтра, чтобы посмотреть структуру
+                const sampleProduct = await CoffeeModel.findOne();
+                console.log(
+                    "Пример info из БД:",
+                    JSON.stringify(sampleProduct?.info, null, 2)
+                );
+            }
+
             return res.json(products);
         } catch (e) {
             next(ApiError.badRequest(e.message));

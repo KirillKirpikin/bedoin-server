@@ -28,7 +28,7 @@ class OrderController {
             const saveOrder = await order.save();
             const liqpay = new LiqPay(
                 process.env.LIQPAY_PUBLIC_KEY,
-                process.env.LIQPAY_PRIVATE_KEY
+                process.env.LIQPAY_PRIVATE_KEY,
             );
             const paymentData = {
                 version: "3",
@@ -49,6 +49,53 @@ class OrderController {
         }
     }
 
+    async createMono(req, res, next) {
+        const orderData = req.body;
+        orderData.orderId = generateOrderNumber();
+        const order = new OrderModel(orderData);
+        const saveOrder = await order.save();
+
+        const items = orderData.order.map((item) => ({
+            name: item.title, // Количество товара
+            qty: item.quantity, // Количество товара
+            sum: +item.price * 100, // Цена за единицу
+            total: item.quantity * (item.price * 100), // Общая стоимость
+            code: item.id ? item.id : "0", // ID товара
+            icon: null,
+            unit: "шт.",
+        }));
+
+        const data = {
+            amount: saveOrder.total * 100,
+            ccy: 980,
+            merchantPaymInfo: {
+                reference: saveOrder.orderId,
+                destination: saveOrder.orderId,
+                comment: "",
+                customerEmails: [saveOrder.email, "coffeebedouin@gmail.com"],
+
+                basketOrder: items,
+            },
+            redirectUrl: `https://bedoin.com.ua/result?orderId=${saveOrder.orderId}&total=${saveOrder.total}`,
+            webHookUrl: "https://bedoin.com.ua/api/orders/webhook",
+        };
+
+        try {
+            const response = await axios.post(process.env.MONO_API_URL, data, {
+                headers: {
+                    "X-Token": process.env.MONO_TOKEN,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            // Возвращаем ссылку на платёжную страницу
+            return res.json({ payUrl: response.data.pageUrl });
+        } catch (error) {
+            console.error("Ошибка при обработке webhook:", error);
+            res.status(500).send("Internal server error");
+        }
+    }
+
     async createOffline(req, res, next) {
         try {
             const orderData = req.body;
@@ -64,6 +111,33 @@ class OrderController {
             console.error("Ошибка при сохранении заказа:", error);
             return res.status(500).json({ error: "Internal server error" });
         }
+    }
+
+    async webhook(req, res) {
+        const paymentData = req.body;
+
+        const order = await OrderModel.findOne({
+            orderId: paymentData.reference,
+        });
+
+        switch (paymentData.status) {
+            case "success":
+                console.log("Платеж обрабатывается");
+                // Логика для статуса "processing"
+                sendTelegramMessage(order);
+                break;
+            case "failure":
+                order.paymentStatus = "error";
+                await order.save();
+                break;
+
+            default:
+                console.log("Неизвестный статус");
+                // Логика для обработки неизвестных статусов
+                break;
+        }
+
+        res.status(200).send("OK");
     }
 
     async singUp(req, res) {
@@ -84,13 +158,13 @@ class OrderController {
         // Проверка подлинности запроса
         const liqpay = new LiqPay(
             process.env.LIQPAY_PUBLIC_KEY,
-            process.env.LIQPAY_PRIVATE_KEY
+            process.env.LIQPAY_PRIVATE_KEY,
         );
 
         const expectedSignature = liqpay.str_to_sign(
             process.env.LIQPAY_PRIVATE_KEY +
                 data +
-                process.env.LIQPAY_PRIVATE_KEY
+                process.env.LIQPAY_PRIVATE_KEY,
         );
 
         if (signature !== expectedSignature) {
@@ -114,17 +188,19 @@ class OrderController {
                 sendTelegramMessage(order);
                 await order.save();
             } else {
-                await OrderModel.findByIdAndDelete(order._id);
+                order.paymentStatus = "error";
+                await order.save();
             }
 
             // Перенаправление клиента на страницу результатов
             return res.redirect(
-                `https://bedoin.com.ua/result?orderId=${order.orderId}&total=${order.total}`
+                `https://bedoin.com.ua/result?orderId=${order.orderId}&total=${order.total}`,
             ); // Замените на URL вашего React-приложения
         } catch (error) {
             const order = await OrderModel.findOne({ orderId: order_id });
             if (order) {
-                await OrderModel.findByIdAndDelete(order._id);
+                order.paymentStatus = "error";
+                await order.save();
             }
             return res.redirect("https://bedoin.com.ua/");
         }
@@ -134,10 +210,52 @@ class OrderController {
         res.redirect("https://bedoin.com.ua/result"); // Замените на URL вашего React-приложения
     }
 
+    async getByOrderId(req, res) {
+        try {
+            const { orderId } = req.params;
+
+            const order = await OrderModel.findOne({ orderId });
+
+            if (!order) {
+                return res.status(404).json({ message: "Order not found" });
+            }
+
+            return res.json(order);
+        } catch (e) {
+            console.error(e);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    }
+
     async getAllOrders(req, res) {
         try {
-            const orders = await OrderModel.find().sort({ orderTime: -1 });
-            return res.json(orders);
+            // Получаем параметры пагинации из query
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 20;
+            const skip = (page - 1) * limit;
+
+            const filter = { paymentStatus: "pending" };
+
+            // Получаем общее количество заказов с фильтром
+            const total = await OrderModel.countDocuments(filter);
+
+            // Получаем заказы с пагинацией
+            const orders = await OrderModel.find(filter)
+                .sort({ orderTime: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            return res.json({
+                orders,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(total / limit),
+                    totalOrders: total,
+                    ordersPerPage: limit,
+                    hasNextPage: page < Math.ceil(total / limit),
+                    hasPrevPage: page > 1,
+                },
+            });
         } catch (e) {
             return res.status(500).json({ error: "Internal server error" });
         }

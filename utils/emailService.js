@@ -8,8 +8,10 @@ async function sendTelegramMessage(order) {
 
     const getPayInfo = (pay) => {
         switch (pay) {
+            case "OnlinePayMono":
+                return "Через Monobank";
             case "OnlinePay":
-                return "Онлайн оплата";
+                return "Через LiqPay";
             case "Cash":
                 return "При получении";
             case "ScorePay":
@@ -23,6 +25,10 @@ async function sendTelegramMessage(order) {
                 return `Доставка: Нова Пошта\n
         Оплата: ${getPayInfo(order.payment)}\n
         Город: ${order.city}\nОтделение: ${order.warehouses}`;
+            case "RozetkaPost":
+                return `Доставка: Rozetka Delivery\n
+        Оплата: ${getPayInfo(order.payment)}\n
+        Город: ${order.city}\n Отделение: ${order.warehouses}`;
             case "Courier":
                 return `Доставка: Курьерская доставка\n
         Оплата: ${getPayInfo(order.payment)}`;
@@ -42,6 +48,7 @@ async function sendTelegramMessage(order) {
 - Email: ${order.email},
 - Доп. информ.: ${order.info},
 - Телефон: ${order.phone}
+${order.isConversion ? " - Sellaction" : ""}
 
 Заказанные товары:
 ${order.order
@@ -56,6 +63,7 @@ ${order.order
     .join("\n")}
 
 Общая сумма заказа: ${order.total} грн.
+Promo: ${order.promo ? order.promo : "без"}
 
 Доставка:
 ${getDeliveryInfo(order)}

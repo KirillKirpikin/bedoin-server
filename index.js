@@ -10,9 +10,17 @@ const cookieParser = require("cookie-parser");
 
 const PORT = process.env.PORT || 5000;
 
+const whitelist = ["http://localhost:3000", "https://bedoin.com.ua"];
+
 const corsOptions = {
-    origin: ["http://localhost:3000", "https://bedoin.com.ua"], // Указываем точный домен
-    credentials: true, // Разрешаем передавать куки
+    origin: function (origin, callback) {
+        if (!origin || whitelist.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
 };
 
 const app = express();
@@ -32,7 +40,9 @@ const start = async () => {
                 useUnifiedTopology: true,
             })
             .then(() => console.log("connect to MongoDB"));
-        app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+        app.listen(PORT, "0.0.0.0", () =>
+            console.log(`Server started on port ${PORT}`)
+        );
     } catch (e) {
         console.log(e);
     }
