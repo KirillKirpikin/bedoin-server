@@ -8,6 +8,20 @@ const DripSchema = new Schema(
         id_standart: { type: String, required: false },
         imgs: [{ type: String, required: true }],
         in_stock: { type: Boolean, required: true },
+        crossSell: [
+            {
+                model: {
+                    type: String,
+                    enum: ["Coffee", "Drip", "Lemonade", "Merch"],
+                    required: true,
+                },
+                item: {
+                    type: Schema.Types.ObjectId,
+                    required: true,
+                    refPath: "crossSell.model",
+                },
+            },
+        ],
         price: {
             standart: {
                 regular: { type: String, required: true },
@@ -23,7 +37,7 @@ const DripSchema = new Schema(
     },
     {
         collection: "drip",
-    }
+    },
 );
 
 module.exports = model("Drip", DripSchema);

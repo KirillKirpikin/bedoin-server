@@ -11,7 +11,12 @@ const { startCleanupErrorOrdersCron } = require("./cron/cleanupErrorOrders");
 
 const PORT = process.env.PORT || 5000;
 
-const whitelist = ["http://localhost:3000", "https://bedoin.com.ua"];
+const whitelist = [
+    "http://localhost:3000",
+    "https://bedoin.com.ua",
+    "https://bedoincoffee.ua",
+    "https://www.bedoincoffee.ua",
+];
 
 const corsOptions = {
     origin: function (origin, callback) {

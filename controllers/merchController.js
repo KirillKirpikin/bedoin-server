@@ -29,6 +29,13 @@ class MerchController {
             let info = req.body.info;
             let infoArr = parseInfo(info);
 
+            let crossSell = req.body.crossSell;
+            if (crossSell) {
+                crossSell = JSON.parse(crossSell);
+            } else {
+                crossSell = [];
+            }
+
             const newMerch = new MerchModel({
                 title,
                 // description,
@@ -39,6 +46,7 @@ class MerchController {
                 price: price,
                 info: infoArr,
                 size: arrSizes,
+                crossSell,
             });
 
             const saveMerch = await newMerch.save();
@@ -73,6 +81,20 @@ class MerchController {
             let info = req.body.info;
             let infoArr = parseInfo(info);
 
+            let crossSellParsed = [];
+
+            try {
+                const raw = req.body.crossSell; // строка из FormData
+                if (typeof raw === "string" && raw.trim()) {
+                    crossSellParsed = JSON.parse(raw);
+                } else {
+                    crossSellParsed = [];
+                }
+            } catch (e) {
+                console.log("Bad crossSell JSON:", req.body.crossSell);
+                crossSellParsed = [];
+            }
+
             const updateData = {
                 title,
                 // description,
@@ -83,6 +105,7 @@ class MerchController {
                 price: price,
                 info: infoArr,
                 size: arrSizes,
+                crossSell: crossSellParsed,
             };
 
             const updateMerch = await MerchModel.findByIdAndUpdate(
@@ -120,7 +143,7 @@ class MerchController {
     }
     async getInStock(req, res, next) {
         try {
-            const product = await MerchModel.find().sort({ in_stock: -1 });
+            const product = await MerchModel.find({ in_stock: true });
             return res.json(product);
         } catch (e) {
             next(ApiError.badRequest(e.message));

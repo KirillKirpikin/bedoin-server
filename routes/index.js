@@ -12,6 +12,7 @@ const subscribeRouter = require("./subscribeRouter");
 const xmlRouter = require("./xmlRouter");
 const promoRouter = require("./promoRouter");
 const rozetkaRouter = require("./rozetkaRouter");
+const productRouter = require("./productRouter");
 
 router.use("/coffee", coffeeRouter);
 router.use("/orders", orderRouter);
@@ -22,6 +23,7 @@ router.use("/slider", sliderRouter);
 router.use("/sticker", stickerRouter);
 router.use("/auth", authRouter);
 router.use("/subs", subscribeRouter);
+router.use("/products", productRouter);
 router.use("/product_feed.xml", xmlRouter);
 router.use("/promo", promoRouter);
 router.use("/rozetka", rozetkaRouter);

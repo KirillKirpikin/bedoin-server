@@ -39,6 +39,12 @@ class CoffeeController {
                     arrKg.push(saveImg(img_kg));
                 }
             }
+            let crossSell = req.body.crossSell;
+            if (crossSell) {
+                crossSell = JSON.parse(crossSell);
+            } else {
+                crossSell = [];
+            }
 
             let price = req.body.price;
             if (price) {
@@ -103,6 +109,7 @@ class CoffeeController {
                 description,
                 info: infoArr,
                 recipe: recipeArr,
+                crossSell,
             });
 
             const saveProduct = await newProduct.save();
@@ -113,6 +120,7 @@ class CoffeeController {
     }
 
     async updateOne(req, res, next) {
+        console.log("upd");
         try {
             const { id } = req.params;
             let {
@@ -127,7 +135,6 @@ class CoffeeController {
                 oldImgs,
                 oldImgsKg,
             } = req.body;
-            console.log(req.body);
             let fil = req.files;
             const product = await CoffeeModel.findById(id);
             if (!product) {
@@ -157,6 +164,20 @@ class CoffeeController {
                 } else {
                     arr.push(saveImg(fil.img));
                 }
+            }
+
+            let crossSellParsed = [];
+
+            try {
+                const raw = req.body.crossSell; // строка из FormData
+                if (typeof raw === "string" && raw.trim()) {
+                    crossSellParsed = JSON.parse(raw);
+                } else {
+                    crossSellParsed = [];
+                }
+            } catch (e) {
+                console.log("Bad crossSell JSON:", req.body.crossSell);
+                crossSellParsed = [];
             }
 
             let arrKg = [];
@@ -250,6 +271,7 @@ class CoffeeController {
                 description,
                 info: infoArr,
                 recipe: recipeArr,
+                crossSell: crossSellParsed,
             };
 
             const updatedProduct = await CoffeeModel.findByIdAndUpdate(
@@ -264,6 +286,7 @@ class CoffeeController {
 
             return res.json({ message: "Успншно обновлено" });
         } catch (error) {
+            console.log(error);
             return res.json({ message: "Ошибка", error });
         }
     }
@@ -277,7 +300,6 @@ class CoffeeController {
             if (req.query.search) {
                 filter.title = { $regex: req.query.search, $options: "i" };
             }
-            console.log("roastType запрос:", req.query.roastType);
 
             // Фильтр по типу обжарки (під фільтр / під еспресо)
             if (req.query.roastType) {
@@ -293,6 +315,10 @@ class CoffeeController {
                         },
                     },
                 };
+            }
+
+            if (req.query.in_stock === "true") {
+                filter.in_stock = true;
             }
 
             const products = await CoffeeModel.find(filter).sort({

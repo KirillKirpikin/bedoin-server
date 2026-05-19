@@ -9,6 +9,20 @@ const MerchSchema = new Schema(
         id_standart: { type: String, required: false },
         in_stock: { type: Boolean, required: true },
         size: { type: [String], default: ["none"] },
+        crossSell: [
+            {
+                model: {
+                    type: String,
+                    enum: ["Coffee", "Drip", "Lemonade", "Merch"],
+                    required: true,
+                },
+                item: {
+                    type: Schema.Types.ObjectId,
+                    required: true,
+                    refPath: "crossSell.model",
+                },
+            },
+        ],
         price: {
             standart: {
                 regular: { type: String, required: true },
@@ -24,7 +38,7 @@ const MerchSchema = new Schema(
     },
     {
         collection: "merch",
-    }
+    },
 );
 
 module.exports = model("Merch", MerchSchema);

@@ -8,6 +8,20 @@ const LemonadeSchema = new Schema(
         short_description: { type: String, required: true },
         id_standart: { type: String, required: false },
         in_stock: { type: Boolean, required: true },
+        crossSell: [
+            {
+                model: {
+                    type: String,
+                    enum: ["Coffee", "Drip", "Lemonade", "Merch"],
+                    required: true,
+                },
+                item: {
+                    type: Schema.Types.ObjectId,
+                    required: true,
+                    refPath: "crossSell.model",
+                },
+            },
+        ],
         price: {
             standart: {
                 regular: { type: String, required: true },
@@ -23,7 +37,7 @@ const LemonadeSchema = new Schema(
     },
     {
         collection: "lemonade",
-    }
+    },
 );
 
 module.exports = model("Lemonade", LemonadeSchema);

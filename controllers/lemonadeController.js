@@ -28,6 +28,13 @@ class LemonadeController {
             let info = req.body.info;
             let infoArr = parseInfo(info);
 
+            let crossSell = req.body.crossSell;
+            if (crossSell) {
+                crossSell = JSON.parse(crossSell);
+            } else {
+                crossSell = [];
+            }
+
             const newLemonade = new LemonadeModel({
                 title,
                 description,
@@ -37,6 +44,7 @@ class LemonadeController {
                 in_stock,
                 price: price,
                 info: infoArr,
+                crossSell,
             });
 
             const saveLemonade = await newLemonade.save();
@@ -70,6 +78,21 @@ class LemonadeController {
             }
             let info = req.body.info;
             let infoArr = parseInfo(info);
+
+            let crossSellParsed = [];
+
+            try {
+                const raw = req.body.crossSell; // строка из FormData
+                if (typeof raw === "string" && raw.trim()) {
+                    crossSellParsed = JSON.parse(raw);
+                } else {
+                    crossSellParsed = [];
+                }
+            } catch (e) {
+                console.log("Bad crossSell JSON:", req.body.crossSell);
+                crossSellParsed = [];
+            }
+
             const updateData = {
                 title,
                 description,
@@ -79,6 +102,7 @@ class LemonadeController {
                 in_stock,
                 price: price,
                 info: infoArr,
+                crossSell: crossSellParsed,
             };
 
             const updateLemonade = await LemonadeModel.findByIdAndUpdate(
@@ -115,7 +139,7 @@ class LemonadeController {
     }
     async getInStock(req, res, next) {
         try {
-            const product = await LemonadeModel.find().sort({ in_stock: -1 });
+            const product = await LemonadeModel.find({ in_stock: true });
             return res.json(product);
         } catch (e) {
             next(ApiError.badRequest(e.message));

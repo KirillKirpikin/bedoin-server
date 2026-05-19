@@ -11,6 +11,20 @@ const CoffeeSchema = new Schema(
         imgs_kg: [{ type: String, required: false }],
         packing_kg: { type: Boolean, required: true },
         in_stock: { type: Boolean, required: true },
+        crossSell: [
+            {
+                model: {
+                    type: String,
+                    enum: ["Coffee", "Drip", "Lemonade", "Merch"],
+                    required: true,
+                },
+                item: {
+                    type: Schema.Types.ObjectId,
+                    required: true,
+                    refPath: "crossSell.model",
+                },
+            },
+        ],
         price: {
             standart: {
                 regular: { type: String, required: true },
@@ -48,7 +62,7 @@ const CoffeeSchema = new Schema(
     },
     {
         collection: "coffees",
-    }
+    },
 );
 
 module.exports = model("Coffee", CoffeeSchema);

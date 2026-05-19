@@ -26,6 +26,13 @@ class DripController {
             if (price) {
                 price = JSON.parse(price);
             }
+            let crossSell = req.body.crossSell;
+            if (crossSell) {
+                crossSell = JSON.parse(crossSell);
+            } else {
+                crossSell = [];
+            }
+
             let info = req.body.info;
             let infoArr = parseInfo(info);
 
@@ -38,6 +45,7 @@ class DripController {
                 id_standart,
                 price: price,
                 info: infoArr,
+                crossSell,
             });
 
             const saveProduct = await newDrip.save();
@@ -72,6 +80,20 @@ class DripController {
             let info = req.body.info;
             let infoArr = parseInfo(info);
 
+            let crossSellParsed = [];
+
+            try {
+                const raw = req.body.crossSell; // строка из FormData
+                if (typeof raw === "string" && raw.trim()) {
+                    crossSellParsed = JSON.parse(raw);
+                } else {
+                    crossSellParsed = [];
+                }
+            } catch (e) {
+                console.log("Bad crossSell JSON:", req.body.crossSell);
+                crossSellParsed = [];
+            }
+
             const updateData = {
                 title,
                 short_description,
@@ -81,6 +103,7 @@ class DripController {
                 id_standart,
                 price: price,
                 info: infoArr,
+                crossSell: crossSellParsed,
             };
 
             const updatedDrip = await DripModel.findByIdAndUpdate(
@@ -103,6 +126,7 @@ class DripController {
     async getAll(req, res, next) {
         try {
             const products = await DripModel.find();
+
             return res.json(products);
         } catch (e) {
             next(ApiError.badRequest(e.message));
@@ -121,7 +145,8 @@ class DripController {
 
     async getInStock(req, res, next) {
         try {
-            const product = await DripModel.find().sort({ in_stock: -1 });
+            const product = await DripModel.find({ in_stock: true });
+
             return res.json(product);
         } catch (e) {
             next(ApiError.badRequest(e.message));
