@@ -7,6 +7,7 @@ const axios = require("axios");
 const generateOrderNumber = require("../utils/generateOrderNum");
 const { sendTelegramMessage } = require("../utils/emailService");
 const { sendToTelegram } = require("../utils/courceService");
+const { sendOrderConfirmationEmail, sendOrderAdminEmail } = require("../utils/mailer");
 
 class OrderController {
     async create(req, res, next) {
@@ -28,7 +29,7 @@ class OrderController {
             const saveOrder = await order.save();
             const liqpay = new LiqPay(
                 process.env.LIQPAY_PUBLIC_KEY,
-                process.env.LIQPAY_PRIVATE_KEY,
+                process.env.LIQPAY_PRIVATE_KEY
             );
             const paymentData = {
                 version: "3",
@@ -37,8 +38,8 @@ class OrderController {
                 currency: "UAH",
                 description: "BEDOIN",
                 order_id: saveOrder.orderId,
-                server_url: "https://bedoin.com.ua/api/orders/redirect",
-                result_url: `https://bedoin.com.ua/result?orderId=${order.orderId}&total=${order.total}`,
+                server_url: "https://bedoincoffee.ua/api/orders/redirect",
+                result_url: `https://bedoincoffee.ua/result?orderId=${order.orderId}&total=${order.total}`,
                 rro_info: JSON.stringify(rro),
             };
             const paymentHtml = liqpay.cnb_form(paymentData);
@@ -76,8 +77,8 @@ class OrderController {
 
                 basketOrder: items,
             },
-            redirectUrl: `https://bedoin.com.ua/result?orderId=${saveOrder.orderId}&total=${saveOrder.total}`,
-            webHookUrl: "https://bedoin.com.ua/api/orders/webhook",
+            redirectUrl: `https://bedoincoffee.ua/result?orderId=${saveOrder.orderId}&total=${saveOrder.total}`,
+            webHookUrl: "https://bedoincoffee.ua/api/orders/webhook",
         };
 
         try {
@@ -101,8 +102,10 @@ class OrderController {
             const orderData = req.body;
             orderData.orderId = generateOrderNumber();
             const order = new OrderModel(orderData);
-            sendTelegramMessage(order);
             const saveOrder = await order.save();
+            sendTelegramMessage(saveOrder);
+            sendOrderConfirmationEmail(saveOrder);
+            sendOrderAdminEmail(saveOrder);
             return res.json({
                 orderId: saveOrder.orderId,
                 total: saveOrder.total,
@@ -122,9 +125,9 @@ class OrderController {
 
         switch (paymentData.status) {
             case "success":
-                console.log("Платеж обрабатывается");
-                // Логика для статуса "processing"
                 sendTelegramMessage(order);
+                sendOrderConfirmationEmail(order);
+                sendOrderAdminEmail(order);
                 break;
             case "failure":
                 order.paymentStatus = "error";
@@ -158,13 +161,13 @@ class OrderController {
         // Проверка подлинности запроса
         const liqpay = new LiqPay(
             process.env.LIQPAY_PUBLIC_KEY,
-            process.env.LIQPAY_PRIVATE_KEY,
+            process.env.LIQPAY_PRIVATE_KEY
         );
 
         const expectedSignature = liqpay.str_to_sign(
             process.env.LIQPAY_PRIVATE_KEY +
                 data +
-                process.env.LIQPAY_PRIVATE_KEY,
+                process.env.LIQPAY_PRIVATE_KEY
         );
 
         if (signature !== expectedSignature) {
@@ -184,8 +187,9 @@ class OrderController {
             }
 
             if (status === "success") {
-                // order.paymentStatus = 'paid';
                 sendTelegramMessage(order);
+                sendOrderConfirmationEmail(order);
+                sendOrderAdminEmail(order);
                 await order.save();
             } else {
                 order.paymentStatus = "error";
@@ -194,7 +198,7 @@ class OrderController {
 
             // Перенаправление клиента на страницу результатов
             return res.redirect(
-                `https://bedoin.com.ua/result?orderId=${order.orderId}&total=${order.total}`,
+                `https://bedoincoffee.ua/result?orderId=${order.orderId}&total=${order.total}`
             ); // Замените на URL вашего React-приложения
         } catch (error) {
             const order = await OrderModel.findOne({ orderId: order_id });
@@ -202,12 +206,12 @@ class OrderController {
                 order.paymentStatus = "error";
                 await order.save();
             }
-            return res.redirect("https://bedoin.com.ua/");
+            return res.redirect("https://bedoincoffee.ua/");
         }
     }
 
     async result(req, res) {
-        res.redirect("https://bedoin.com.ua/result"); // Замените на URL вашего React-приложения
+        res.redirect("https://bedoincoffee.ua/result"); // Замените на URL вашего React-приложения
     }
 
     async getByOrderId(req, res) {
