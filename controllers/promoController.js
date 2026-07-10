@@ -5,6 +5,9 @@ class PromoController {
     async create(req, res, next) {
         try {
             const { name, product, procent } = req.body;
+            if (Number(procent) > 50) {
+                return res.status(400).json({ message: "Відсоток не може бути більше 50%" });
+            }
             const promo = new PromoModel({
                 name,
                 product,
