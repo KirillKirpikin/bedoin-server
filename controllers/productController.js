@@ -2,8 +2,9 @@ const Coffee = require("../models/coffee-model");
 const Drip = require("../models/drip-model");
 const Lemonade = require("../models/lemonade-model");
 const Merch = require("../models/merch-model");
+const LimitedCoffee = require("../models/limited-coffee-model");
 
-const MODELS = { Coffee, Drip, Lemonade, Merch };
+const MODELS = { Coffee, Drip, Lemonade, Merch, LimitedCoffee };
 
 class ProductController {
     async getByRefs(req, res) {

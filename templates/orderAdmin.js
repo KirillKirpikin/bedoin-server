@@ -4,7 +4,6 @@ function orderAdminTemplate(order) {
     const timeOrd = formatDateTime(order.orderTime);
 
     const deliveryLabels = {
-        NovaPost: "Нова Пошта",
         RozetkaPost: "Rozetka Delivery",
         Courier: "Кур'єрська доставка",
         Pickup: "Самовивіз",
@@ -17,7 +16,14 @@ function orderAdminTemplate(order) {
         ScorePay: "На розрахунковий рахунок",
     };
 
-    const deliveryLabel = deliveryLabels[order.delivery] || order.delivery;
+    const deliveryLabel =
+        order.delivery === "NovaPost"
+            ? `Нова Пошта${
+                  order.novaPostType === "Courier"
+                      ? " (кур'єрська доставка)"
+                      : " (відділення)"
+              }`
+            : deliveryLabels[order.delivery] || order.delivery;
     const paymentLabel = paymentLabels[order.payment] || order.payment;
 
     const itemsRows = order.order
@@ -37,6 +43,26 @@ function orderAdminTemplate(order) {
     const deliveryDetails = () => {
         switch (order.delivery) {
             case "NovaPost":
+                if (order.novaPostType === "Courier") {
+                    return `
+                <tr>
+                    <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Місто:</td>
+                    <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${order.city || "—"}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Адреса:</td>
+                    <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${order.street || ""} ${order.house || ""}</td>
+                </tr>`;
+                }
+                return `
+                <tr>
+                    <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Місто:</td>
+                    <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${order.city || "—"}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Відділення:</td>
+                    <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${order.warehouses || "—"}</td>
+                </tr>`;
             case "RozetkaPost":
                 return `
                 <tr>
@@ -47,10 +73,28 @@ function orderAdminTemplate(order) {
                     <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Відділення:</td>
                     <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${order.warehouses || "—"}</td>
                 </tr>`;
+            case "Courier":
+                return `
+                <tr>
+                    <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Адреса:</td>
+                    <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${order.courierAddress || "—"}</td>
+                </tr>`;
             default:
                 return "";
         }
     };
+
+    const deliveryPaymentRow =
+        order.delivery === "NovaPost"
+            ? `<tr>
+                    <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Оплата доставки:</td>
+                    <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${
+                        order.deliveryCostIncluded
+                            ? `так (${order.deliveryCost} грн)`
+                            : "ні"
+                    }</td>
+                </tr>`
+            : "";
 
     return `
 <!DOCTYPE html>
@@ -129,6 +173,7 @@ function orderAdminTemplate(order) {
                                     <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${deliveryLabel}</td>
                                 </tr>
                                 ${deliveryDetails()}
+                                ${deliveryPaymentRow}
                                 <tr>
                                     <td style="padding: 6px 12px; color: #666666; font-size: 13px;">Оплата:</td>
                                     <td style="padding: 6px 12px; color: #000000; font-size: 13px;">${paymentLabel}</td>

@@ -41,6 +41,23 @@ const CoffeeSchema = new Schema(
                 img: String,
             },
         ],
+        roast_type: {
+            type: String,
+            enum: ["Espresso", "Filter"],
+            default: "Filter",
+            required: true,
+        },
+        coffee_type: {
+            type: String,
+            enum: ["Premium", "Specialty", "Blend", "Micro lot"],
+            default: "Specialty",
+            required: true,
+        },
+        badge: {
+            type: String,
+            enum: ["New crop", "Bestseller"],
+            required: false,
+        },
         recipe: [
             {
                 name: String,

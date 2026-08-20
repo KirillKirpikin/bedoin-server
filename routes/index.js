@@ -13,8 +13,10 @@ const xmlRouter = require("./xmlRouter");
 const promoRouter = require("./promoRouter");
 const rozetkaRouter = require("./rozetkaRouter");
 const productRouter = require("./productRouter");
+const limitedCoffeeRouter = require("./limitedCoffeeRouter");
 
 router.use("/coffee", coffeeRouter);
+router.use("/limited-coffee", limitedCoffeeRouter);
 router.use("/orders", orderRouter);
 router.use("/drip", dripRouter);
 router.use("/merch", merchRouter);

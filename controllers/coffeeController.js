@@ -17,6 +17,9 @@ class CoffeeController {
                 packing_kg,
                 id_kg,
                 id_standart,
+                roast_type,
+                coffee_type,
+                badge,
             } = req.body;
             let { img, img_kg } = req.files;
             let arr = [];
@@ -106,6 +109,9 @@ class CoffeeController {
                 id_standart: id_standart,
                 price: price,
                 type: arrType,
+                roast_type,
+                coffee_type,
+                badge: badge ? badge : undefined,
                 description,
                 info: infoArr,
                 recipe: recipeArr,
@@ -134,6 +140,9 @@ class CoffeeController {
                 id_standart,
                 oldImgs,
                 oldImgsKg,
+                roast_type,
+                coffee_type,
+                badge,
             } = req.body;
             let fil = req.files;
             const product = await CoffeeModel.findById(id);
@@ -268,15 +277,21 @@ class CoffeeController {
                 id_kg: id_kg,
                 id_standart: id_standart,
                 type: arrType,
+                roast_type,
+                coffee_type,
                 description,
                 info: infoArr,
                 recipe: recipeArr,
                 crossSell: crossSellParsed,
             };
 
+            const updateQuery = badge
+                ? { $set: { ...updateData, badge } }
+                : { $set: updateData, $unset: { badge: "" } };
+
             const updatedProduct = await CoffeeModel.findByIdAndUpdate(
                 id,
-                updateData,
+                updateQuery,
                 { new: true }
             );
 
@@ -301,20 +316,9 @@ class CoffeeController {
                 filter.title = { $regex: req.query.search, $options: "i" };
             }
 
-            // Фильтр по типу обжарки (під фільтр / під еспресо)
+            // Фильтр по типу обжарки (Espresso / Filter)
             if (req.query.roastType) {
-                filter["info"] = {
-                    $elemMatch: {
-                        name: {
-                            $regex: "^\\s*Тип обсмажки\\s*$",
-                            $options: "i",
-                        },
-                        text: {
-                            $regex: `^\\s*${req.query.roastType.trim()}\\s*$`,
-                            $options: "i",
-                        },
-                    },
-                };
+                filter.roast_type = req.query.roastType.trim();
             }
 
             if (req.query.in_stock === "true") {
@@ -324,21 +328,6 @@ class CoffeeController {
             const products = await CoffeeModel.find(filter).sort({
                 in_stock: -1,
             });
-
-            // Временное логирование для отладки
-            if (req.query.roastType && products.length > 0) {
-                console.log(
-                    "Первый найденный продукт info:",
-                    JSON.stringify(products[0].info, null, 2)
-                );
-            } else if (req.query.roastType && products.length === 0) {
-                // Получим один продукт без фильтра, чтобы посмотреть структуру
-                const sampleProduct = await CoffeeModel.findOne();
-                console.log(
-                    "Пример info из БД:",
-                    JSON.stringify(sampleProduct?.info, null, 2)
-                );
-            }
 
             return res.json(products);
         } catch (e) {

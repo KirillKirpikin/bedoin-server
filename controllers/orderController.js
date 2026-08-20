@@ -13,18 +13,30 @@ class OrderController {
     async create(req, res, next) {
         try {
             const orderData = req.body;
+            const rroItems = orderData.order.map((item) => ({
+                amount: item.quantity, // Количество товара
+                price: +item.price, // Цена за единицу
+                cost: item.quantity * item.price, // Общая стоимость
+                id: item.id ? +item.id : 0, // ID товара
+            }));
+            // Если доставка включена в оплату — добавляем её отдельной позицией,
+            // иначе сумма позиций разойдётся с amount на сумму доставки
+            if (orderData.deliveryCostIncluded && orderData.deliveryCost > 0) {
+                rroItems.push({
+                    amount: 1,
+                    price: orderData.deliveryCost,
+                    cost: orderData.deliveryCost,
+                    id: 0,
+                });
+            }
             let rro = {
-                items: orderData.order.map((item) => ({
-                    amount: item.quantity, // Количество товара
-                    price: +item.price, // Цена за единицу
-                    cost: item.quantity * item.price, // Общая стоимость
-                    id: item.id ? +item.id : 0, // ID товара
-                })),
+                items: rroItems,
                 delivery_emails: [orderData.email, "coffeebedouin@gmail.com"],
             };
 
             // console.log(rro);
             orderData.orderId = generateOrderNumber();
+            orderData.paymentStatus = "awaiting_payment";
             const order = new OrderModel(orderData);
             const saveOrder = await order.save();
             const liqpay = new LiqPay(
@@ -53,6 +65,7 @@ class OrderController {
     async createMono(req, res, next) {
         const orderData = req.body;
         orderData.orderId = generateOrderNumber();
+        orderData.paymentStatus = "awaiting_payment";
         const order = new OrderModel(orderData);
         const saveOrder = await order.save();
 
@@ -65,6 +78,19 @@ class OrderController {
             icon: null,
             unit: "шт.",
         }));
+        // Monobank требует, чтобы сумма позиций basketOrder точно совпадала
+        // с amount — если доставка включена в оплату, добавляем её строкой
+        if (orderData.deliveryCostIncluded && orderData.deliveryCost > 0) {
+            items.push({
+                name: "Доставка",
+                qty: 1,
+                sum: orderData.deliveryCost * 100,
+                total: orderData.deliveryCost * 100,
+                code: "delivery",
+                icon: null,
+                unit: "послуга",
+            });
+        }
 
         const data = {
             amount: saveOrder.total * 100,
@@ -104,7 +130,7 @@ class OrderController {
             const order = new OrderModel(orderData);
             const saveOrder = await order.save();
             sendTelegramMessage(saveOrder);
-            sendOrderConfirmationEmail(saveOrder);
+            if (saveOrder.email) sendOrderConfirmationEmail(saveOrder);
             sendOrderAdminEmail(saveOrder);
             return res.json({
                 orderId: saveOrder.orderId,
@@ -125,8 +151,10 @@ class OrderController {
 
         switch (paymentData.status) {
             case "success":
+                order.paymentStatus = "paid";
+                await order.save();
                 sendTelegramMessage(order);
-                sendOrderConfirmationEmail(order);
+                if (order.email) sendOrderConfirmationEmail(order);
                 sendOrderAdminEmail(order);
                 break;
             case "failure":
@@ -187,10 +215,11 @@ class OrderController {
             }
 
             if (status === "success") {
-                sendTelegramMessage(order);
-                sendOrderConfirmationEmail(order);
-                sendOrderAdminEmail(order);
+                order.paymentStatus = "paid";
                 await order.save();
+                sendTelegramMessage(order);
+                if (order.email) sendOrderConfirmationEmail(order);
+                sendOrderAdminEmail(order);
             } else {
                 order.paymentStatus = "error";
                 await order.save();
@@ -238,7 +267,9 @@ class OrderController {
             const limit = parseInt(req.query.limit) || 20;
             const skip = (page - 1) * limit;
 
-            const filter = { paymentStatus: "pending" };
+            // "pending" — офлайн-заказ (готівка/розрахунковий рахунок), "paid" — підтверджена онлайн-оплата.
+            // "awaiting_payment" (ще не оплачено) і "error" (оплата не пройшла) в список не потрапляють.
+            const filter = { paymentStatus: { $in: ["pending", "paid"] } };
 
             // Получаем общее количество заказов с фильтром
             const total = await OrderModel.countDocuments(filter);
